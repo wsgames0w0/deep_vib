@@ -1,0 +1,23 @@
+# Project specific excluded directories and files
+venv/
+datasets/
+ref/
+common.md
+prompt.md
+
+# Checkpoints and temporary data
+ex*/checkpoints/
+*.pt
+*.pth
+
+# Python cache and hidden files
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+.*
+!.gitignore
