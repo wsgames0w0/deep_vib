@@ -2,7 +2,7 @@
 
 ## 1. はじめに（研究背景と目的）
 
-本レポートは，Alexander A. Alemi, Ian Fischer, Joshua V. Dillon, Kevin Murphy による論文 **"Deep Variational Information Bottleneck"**（ICLR 2017, arXiv:1612.00410v7）の理論的定式化の整理，各ステップに分けた学習アルゴリズムの詳細解説，および全4部構成（`ex001`, `ex002`, `ex003` の論文再現実験，ならびに `ex004` の追加実験：MNIST回帰タスクと $K=2$ 潜在空間 $Z$ の散布図比較）の実験結果と考察をまとめた総合レポートである．
+本レポートは，Alexander A. Alemi, Ian Fischer, Joshua V. Dillon, Kevin Murphy による論文 **"Deep Variational Information Bottleneck"**（ICLR 2017, arXiv:1612.00410v7）の理論的定式化の整理，各ステップに分けた学習アルゴリズムの詳細解説，および全5部構成（`ex001`, `ex002`, `ex003` の論文再現実験，ならびに追加実験 `ex004`: MNIST回帰タスクと $K=2$ 潜在空間 $Z$ の散布図比較，`ex005`: 回帰 Deep VIB の 4 つの数学的保証の厳密証明と数値検証）の実験結果と考察をまとめた総合レポートである．
 
 ディープニューラルネットワーク（DNN）の内部表現を情報理論の観点から捉えると，ある中間層の表現は入力情報源 $X$ から確率的エンコーダ $p(z|x; \theta)$ を通じて生成される確率的符号（stochastic encoding）$Z$ とみなすことができる．良い内部表現 $Z$ とは，予測対象であるターゲットラベル $Y$ についての情報を最大限に保持しつつ，入力 $X$ の不要な詳細（ノイズやクラス識別に無関係な個体差）を最大限に忘却・圧縮した「最小十分統計量（minimal sufficient statistic）」として振る舞う表現である．
 
@@ -219,11 +219,12 @@ $$
 
 ## 5. 再現実験の総合結果と考察
 
-本プロジェクトでは，以下の4つの実験ディレクトリに分けて再現実験および追加発展実験を実施した．
+本プロジェクトでは，以下の5つの実験ディレクトリに分けて再現実験および追加発展実験・理論検証を実施した．
 - **実験1（[ex001](file:///c:/Users/watasaku/workspace/deep_vib/ex001)，詳細レポート: [report/ex001.md](file:///c:/Users/watasaku/workspace/deep_vib/report/ex001.md)）**: 高次元潜在空間（$K=256$）における正則化手法の比較（Table 1）と $\beta$ スイープ実験（Figure 1(a)(c)(d)）．
 - **実験2（[ex002](file:///c:/Users/watasaku/workspace/deep_vib/ex002)，詳細レポート: [report/ex002.md](file:///c:/Users/watasaku/workspace/deep_vib/report/ex002.md)）**: 2次元潜在空間（$K=2$）と完全共分散ガウス分布による IB 挙動（Figure 1(b)）および 95% 信頼楕円・分類器エントロピーの可視化（Figure 2）．
 - **実験3（[ex003](file:///c:/Users/watasaku/workspace/deep_vib/ex003)，詳細レポート: [report/ex003.md](file:///c:/Users/watasaku/workspace/deep_vib/report/ex003.md)）**: FGS 攻撃および Carlini & Wagner $L_2$ 最適化攻撃に対する敵対的頑健性の評価（Figures 3, 4, 5, 6）．
 - **実験4（[ex004](file:///c:/Users/watasaku/workspace/deep_vib/ex004)，詳細レポート: [report/ex004.md](file:///c:/Users/watasaku/workspace/deep_vib/report/ex004.md)）**: 【追加実験】MNIST 数字回帰タスク（$y \in [0, 9]$）への Deep VIB の適用と，$K=2$ 潜在空間 $Z$ の散布図における分類タスクと回帰タスクの幾何学的・情報理論的比較．
+- **実験5（[ex005](file:///c:/Users/watasaku/workspace/deep_vib/ex005)，詳細レポート: [report/ex005.md](file:///c:/Users/watasaku/workspace/deep_vib/report/ex005.md)）**: 【理論証明・数値検証】回帰タスクにおける Deep VIB の 4 つの数学的保証（Rate-Distortion 一致定理，1次元多様体への縮退と KKT 固有値法則，情報論的・PAC-Bayes 汎化バウンド，Appendix C 回帰版拡張と敵対的・ノイズ頑健性保証）の厳密証明と実証．
 
 ### 5.1 実験1 (`ex001`): $K=256$ における分類性能と情報ボトルネック曲線
 
@@ -307,6 +308,27 @@ Targeted $L_2$ 最適化攻撃（「0 $\to$ 1」）の視覚的比較を図5（�
   分類タスクでは 10 クラスが数値の大小と無関係に 2次元平面全体に放射状に配置される（$\mathrm{PC1\ Ratio} \approx 51\% \sim 60\%, |\rho_{\mathrm{Spearman}}| \approx 0.20 \sim 0.45$）のに対し，回帰タスク（線形デコーダ）では 2次元の潜在空間が与えられていても **事後平均 $\mu(x)$ が自動的に 1次元の直線上に縮退（$\mathrm{PC1\ Ratio} = 99.8\%$）し，端から $0 \to 1 \to 2 \to \dots \to 9$ の厳密な単調数値順序で等間隔に整列する（$|\rho_{\mathrm{Spearman}}| = 1.00$）**．非線形 MLP デコーダ（$2 \to 64 \to 1$）では，$\beta \le 10^{-2}$ において滑らかな 1次元曲線に沿って $0 \to 9$ が並び（$\mathrm{RMSE}_{\mathrm{MC}} = 0.5007 \sim 0.5174, R^2 = 0.970$），$\beta \ge 10^{-1}$ では KL 正則化によって直線へと収束する．
 - **針状（異方的）信頼楕円による直交次元の情報消去メカニズム**:
   回帰タスクの下段散布図において，95% 信頼楕円はすべて「デコーダの等予測値曲線（点線）に平行な方向」へ細長く伸びた針状となる．これは，予測値が変化する勾配方向には分散を極小化して MSE を抑えつつ，予測値が変化しない等高線方向（直交方向）には事後分布を標準正規事前分布 $\mathcal{N}(0, 1)$（平均 $0$，分散 $1$）に一致させることで，予測に寄与しない第2次元の KL 情報量をゼロに消去しているためである．
+
+---
+
+### 5.5 実験5 (`ex005`): 【理論証明・数値検証】回帰 Deep VIB の 4 つの数学的保証の厳密証明と実証
+
+`ex004` の回帰タスクにおける Deep VIB について，情報理論・非線形最適化理論・統計的学習理論・頑健性理論の観点から以下の **4 つの数学的保証（定理1〜定理4）** を厳密に証明し，実験的に検証した（全証明ステップと検証データ表の詳細は [report/ex005.md](file:///c:/Users/watasaku/workspace/deep_vib/report/ex005.md) および [report/ex004.md](file:///c:/Users/watasaku/workspace/deep_vib/report/ex004.md) 第5節を参照）．
+
+1. **【定理1】連続値ターゲット $Y$ に対する変分下界の厳密性と Rate-Distortion 理論との一致**:
+   - ガウス変分デコーダ $q\_{\theta, \sigma\_y}(y|z) = \mathcal{N}(y \mid f\_d(z; \theta), \sigma\_y^2)$ は任意の $\sigma_y^2 > 0$ に対して相互情報量 $I(Z, Y)$ の厳密な接線変分下界 $\mathcal{L}\_Y(\phi, \theta; \sigma\_y^2) = h(Y) - \frac{1}{2}\mathrm{log}\_2(2\pi \sigma\_y^2) - \frac{\mathrm{MSE}}{(2\,\mathrm{ln}\,2)\sigma\_y^2}$ を与える．
+   - さらに $\sigma_y^2 > 0$ に関して最大化すると，一意な最適解は $\sigma_y^{\star 2} = \mathrm{MSE}$ であり，その上限包絡線 $\sup\_{\sigma\_y^2 > 0}\mathcal{L}\_Y = h(Y) - \frac{1}{2}\mathrm{log}\_2(2\pi e \, \mathrm{MSE})$ はシャノンのガウス・レート歪み下界に厳密に一致する．また固定 $\sigma_y^2$ のもとでの変分下界最大化は，実効係数 $\beta = (2\,\mathrm{ln}\,2)\sigma\_y^2 \beta\_{\mathrm{IB}}$ による $\mathrm{MSE} + \beta\,\mathrm{KL}$ 最小化とパレート最適解集合として完全に一致する．
+2. **【定理2】潜在空間の 1 次元多様体への縮退（Manifold Collapse）と単調整列の必然性**:
+   - 線形デコーダ $f_d(z) = w^\top z + b$ において，$u\_\parallel = w^\star / \|w^\star\|\_2$ とその $(K-1)$ 次元直交補空間 $\mathcal{W}_\perp = \mathrm{ker}(w^{\star \top})$ に直交分解しシューア補行列により KL 項を展開すると，KKT 停留条件から必然的に **$\mu_\perp^\star(x) \equiv 0$，$\Sigma\_\perp^\star(x) \equiv I\_{K-1}$，$I(Z_\perp, X) = 0\text{ bits}$**，かつ主軸分散は **$\sigma\_\parallel^{\star 2} = \frac{\tilde{\beta}}{\|w^\star\|\_2^2 + \tilde{\beta}}$**（$\tilde{\beta} = \frac{\beta}{2\,\mathrm{ln}\,2}$），主軸平均は **$\mu\_\parallel^\star(x) = \frac{\|w^\star\|\_2}{\|w^\star\|\_2^2 + \tilde{\beta}}(\mathbb{E}[Y|x] - b^\star)$** となることが導かれる．これにより $\mathrm{PC1\ Ratio} = 100\%$ への 1次元縮退と $0 \to 9$ の単調整列（$|\rho_{\mathrm{Spearman}}| = 1.00$）が数学的に保証される．
+   - 非線形デコーダ $f_d(z)$ においても，スカラー出力であるため局所フィッシャー情報行列 $\nabla\_z f\_d(\mu\_x)\nabla\_z f\_d(\mu\_x)^\top$ のランクが常に $1$ 以下となり，等予測値超曲面の $(K-1)$ 次元接空間上で固有値が $\sigma_\perp^{\star 2}(x) = 1$ となって 1次元曲線多様体へ縮退する．
+3. **【定理3】回帰タスクにおける一般化誤差・過学習のバウンド（Generalization Bounds）**:
+   - Donsker-Varadhan の変分原理と劣ガウス性（$\sigma_\ell$）により，$I(Z, X) \le \mathbb{E}\_x[\mathrm{KL}[p\_\phi(Z|x)\,\|\,r(Z)]] \le I\_c$ のもとで，未知テストデータに対する期待 MSE と訓練 MSE の乖離は $\big|\mathbb{E}\_S[\mathcal{R}\_{\mathcal{D}} - \hat{\mathcal{R}}\_S]\big| \le \sigma\_\ell \sqrt{\frac{(2\,\mathrm{ln}\,2)I\_c}{n}}$ で上から抑えられる．
+4. **【定理4】敵対的頑健性やノイズ耐性の理論的保証（Appendix C の回帰版拡張）**:
+   - ガウスエンコーダと回帰デコーダの合成は，周辺予測分散が $\mathrm{Var}(Y|x) \approx \sigma\_y^2 + \nabla\_z f\_d(\mu\_x)^\top \Sigma\_x \nabla\_z f\_d(\mu\_x)$ へと膨張した対数二次（Log-Quadratic）予測分布を誘導する．
+   - さらに Pinsker の不等式および Stein の補題により，摂動変動は $|\hat{y}(x+\delta) - \hat{y}(x)| \le M\sqrt{2\,\mathrm{KL}_{\mathrm{nat}}[p(Z|x+\delta)\,\|\,p(Z|x)]}$，局所リプシッツ定数は $\|\nabla\_x \hat{y}(x)\|\_2 \le \|J\_\mu(x)\|\_2 \min\{L\_d, M / \sigma\_\parallel(x)\}$ で上から抑えられ，$\beta$ の増大とともに単調に減衰する．
+
+![実験5: 回帰Deep VIBの4つの数学的保証の実証プロット](./img/ex005_theoretical_guarantees_verification.png)
+*図12: 回帰 Deep VIB の 4 つの数学的保証（定理1〜定理4）の実証結果．(a) Rate-Distortion 包絡線と変分接線下界，(b) KKT 固有値法則 $\sigma\_\parallel^{\star 2} = \frac{\tilde{\beta}}{\|w\|\_2^2 + \tilde{\beta}}$ と実測分散の 4 桁一致および Null-Space 崩壊 $\sigma_\perp^{\star 2} = 1$，(c) 情報論的汎化誤差バウンド，(d) 入力ヤコビアンノルム $\|\nabla\_x \hat{y}(x)\|\_2$ の単調減衰と FGS 敵対的摂動・ガウスノイズ耐性．*
 
 ---
 
